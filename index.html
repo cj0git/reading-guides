@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reading Guides｜雙語繪本與百科導讀總目錄</title>
+  <style>
+    /* Design Tokens aligned with theme.json */
+    :root {
+      --color-lang: #142F56;
+      --color-en: #1E3A5F;
+      --bg-lang: #EEF3F8;
+      --border-lang: #142F56;
+
+      --color-science: #1B4D3E;
+      --bg-science: #EDF5F0;
+      --border-science: #1B4D3E;
+
+      --color-phonics: #8C2D19;
+      --bg-phonics: #FDF6E7;
+      --border-phonics: #B45309;
+
+      --color-text: #1A1A1A;
+      --color-muted: #475569;
+      --bg-page: #F8FAFC;
+      --bg-stripe: #F3F4F6;
+      --border-light: #CBD5E1;
+      --color-white: #FFFFFF;
+
+      --font-zh: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+      --font-en: 'Inter', 'Calibri', sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-zh);
+      color: var(--color-text);
+      background-color: var(--bg-page);
+      line-height: 1.65;
+      font-size: 16px;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px 56px;
+    }
+
+    .hero {
+      background: var(--color-white);
+      border-top: 5px solid var(--color-lang);
+      border-radius: 10px;
+      padding: 26px 24px;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+      margin-bottom: 20px;
+    }
+    .hero-eyebrow {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--color-science);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      line-height: 1.25;
+      color: var(--color-lang);
+    }
+    .hero-desc {
+      margin: 0;
+      font-size: 14.5px;
+      color: var(--color-muted);
+    }
+
+    .toolbar {
+      background: var(--color-white);
+      border: 1px solid var(--border-light);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 22px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .search-wrap {
+      flex: 1 1 260px;
+    }
+    .search-input {
+      width: 100%;
+      padding: 9px 12px;
+      font-size: 14.5px;
+      font-family: var(--font-zh);
+      color: var(--color-text);
+      background: var(--bg-page);
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      outline: none;
+    }
+    .search-input:focus {
+      border-color: var(--color-lang);
+      background: var(--color-white);
+    }
+
+    .filter-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .filter-btn {
+      background: var(--bg-stripe);
+      border: 1px solid var(--border-light);
+      color: var(--color-text);
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--font-zh);
+      transition: all 0.15s ease;
+    }
+    .filter-btn.active {
+      background: var(--color-lang);
+      color: var(--color-white);
+      border-color: var(--color-lang);
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+      gap: 18px;
+    }
+
+    .book-card {
+      background: var(--color-white);
+      border: 1px solid var(--border-light);
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .book-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.09);
+      border-color: var(--color-lang);
+    }
+    .card-link {
+      text-decoration: none;
+      color: inherit;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+    .cover-wrap {
+      display: none;
+      flex: 0 0 88px;
+    }
+    .cover-wrap.has-cover {
+      display: block;
+    }
+    .book-cover {
+      width: 88px;
+      height: auto;
+      border-radius: 5px;
+      border: 1px solid var(--border-light);
+      display: block;
+    }
+    .card-head {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .type-badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      color: var(--color-white);
+    }
+    .badge-lang { background: var(--color-lang); }
+    .badge-science { background: var(--color-science); }
+    .meta-pill {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--bg-stripe);
+      color: var(--color-muted);
+      border: 1px solid var(--border-light);
+    }
+
+    .book-title-en {
+      margin: 0 0 2px;
+      font-family: var(--font-en);
+      font-size: 20px;
+      line-height: 1.25;
+      color: var(--color-lang);
+    }
+    .book-title-zh {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: 6px;
+    }
+    .book-credits {
+      font-size: 13px;
+      color: var(--color-muted);
+    }
+
+    .book-summary {
+      margin: 0 0 16px;
+      font-size: 14.5px;
+      color: var(--color-text);
+      flex: 1 1 auto;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-footer {
+      padding-top: 12px;
+      border-top: 1px solid var(--bg-stripe);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+    }
+    .publisher-note {
+      color: var(--color-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .open-cta {
+      font-weight: 700;
+      color: var(--color-lang);
+      white-space: nowrap;
+    }
+
+    .empty-state {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+      background: var(--color-white);
+      border: 1px dashed var(--border-light);
+      border-radius: 10px;
+      color: var(--color-muted);
+      font-size: 15px;
+    }
+
+    .site-footer {
+      margin-top: 36px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-light);
+      font-size: 13px;
+      color: var(--color-muted);
+      text-align: center;
+    }
+
+    @media (max-width: 640px) {
+      .cards-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero { padding: 20px 16px; }
+      .hero h1 { font-size: 23px; }
+      .card-link { padding: 16px; }
+      .cover-wrap { flex: 0 0 72px; }
+      .book-cover { width: 72px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="hero">
+      <div class="hero-eyebrow">FAMILY READING HUB｜雙語繪本與百科導讀總目錄</div>
+      <h1>Reading Guides｜共讀導讀與科普手冊庫</h1>
+      <p class="hero-desc">
+        收錄原創中文導讀大綱、英文語彙與英美對照、科普與在地連結、音韻帶讀重點及 A4 互動教具。全站均不含原書全文與翻譯，請搭配正版實體書籍共讀。
+      </p>
+    </header>
+
+    <section class="toolbar" aria-label="書目篩選與搜尋">
+      <div class="search-wrap">
+        <input type="search" id="search-input" class="search-input" placeholder="搜尋書名、作者、主題關鍵字..." oninput="applyFilters()">
+      </div>
+      <div class="filter-group" role="group" aria-label="書本分類">
+        <button type="button" class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">全部 (2)</button>
+        <button type="button" class="filter-btn" data-filter="picturebook" onclick="setFilter('picturebook', this)">繪本 (1)</button>
+        <button type="button" class="filter-btn" data-filter="encyclopedia" onclick="setFilter('encyclopedia', this)">百科科普 (1)</button>
+      </div>
+    </section>
+
+    <main>
+      <div class="cards-grid" id="cards-grid">
+        
+      <article class="book-card" data-type="picturebook" data-search="the ugly five 醜醜動物團 julia donaldson axel scheffler 繪本 清晨的非洲大草原上，獅子、花豹與紅鶴看起來光鮮亮麗，唯獨外型怪異的牛羚自覺奇醜無比，一邊漫步一邊唱著自嘲歌。一路上，牠陸續遇見斑點鬣狗、肉垂禿鷲、疣豬與非洲禿鸛，五隻動物互相比較誰更醜，索性組成「醜陋五霸」同行。直到傍晚回家，牠們的寶寶紛紛跑出來熱情迎接，告訴爸媽：你們餵我們吃飯、幫我們清潔理毛，又勇敢保護我們，在寶寶眼中，你們其實是世界上最美麗的「可愛五霸」（the lovely five）。 6 單元 49 組詞彙 音韻帶讀">
+        <a class="card-link" href="./jd-the-ugly-five.html">
+          <div class="card-top">
+            <div class="cover-wrap" id="cover-wrap-0">
+              <img class="book-cover"
+                   id="cover-img-0"
+                   data-isbns="9781338249538,9781407184630,9781407174198"
+                   data-title="The Ugly Five"
+                   data-author="Julia Donaldson"
+                   alt="The Ugly Five 英文原版封面"
+                   referrerpolicy="no-referrer">
+            </div>
+            <div class="card-head">
+              <div class="badge-row">
+                <span class="type-badge badge-lang">繪本</span>
+                <span class="meta-pill">6 單元</span><span class="meta-pill">49 組詞彙</span><span class="meta-pill">音韻帶讀</span>
+              </div>
+              <h2 class="book-title-en">The Ugly Five</h2>
+              <div class="book-title-zh">醜醜動物團</div>
+              <div class="book-credits">文：Julia Donaldson ｜ 圖：Axel Scheffler</div>
+            </div>
+          </div>
+          <p class="book-summary">清晨的非洲大草原上，獅子、花豹與紅鶴看起來光鮮亮麗，唯獨外型怪異的牛羚自覺奇醜無比，一邊漫步一邊唱著自嘲歌。一路上，牠陸續遇見斑點鬣狗、肉垂禿鷲、疣豬與非洲禿鸛，五隻動物互相比較誰更醜，索性組成「醜陋五霸」同行。直到傍晚回家，牠們的寶寶紛紛跑出來熱情迎接，告訴爸媽：你們餵我們吃飯、幫我們清潔理毛，又勇敢保護我們，在寶寶眼中，你們其實是世界上最美麗的「可愛五霸」（The Lovely Five）。</p>
+          <div class="card-footer">
+            <span class="publisher-note">Alison Green Books (2017) / Scholastic Press (2018)</span>
+            <span class="open-cta">開啟導讀手冊 &rarr;</span>
+          </div>
+        </a>
+      </article>
+      <article class="book-card" data-type="encyclopedia" data-search="sportopedia: football 運動大百科：足球 adam skinner mark long 百科科普 本單元出自圖文運動百科《sportopedia》，系統性介紹全球最受歡迎的運動——足球（football）。內容從西元前 2 世紀的古老起源與 1863 年英國現代規則確立出發，依序解析標準草地球場與球門尺寸、11 人制核心規則、越位與紅黃牌判罰、四大場上位置分工與裝備演進，最後以世界盃、英超聯賽及足壇傳奇紀錄收尾，幫助孩子與大人一次建立完整的足球知識框架。 4 單元 50 組詞彙 a4 互動教具">
+        <a class="card-link" href="./sportopedia-football.html">
+          <div class="card-top">
+            <div class="cover-wrap" id="cover-wrap-1">
+              <img class="book-cover"
+                   id="cover-img-1"
+                   data-isbns=""
+                   data-title="Sportopedia"
+                   data-author="Adam Skinner"
+                   alt="Sportopedia: Football 英文原版封面"
+                   referrerpolicy="no-referrer">
+            </div>
+            <div class="card-head">
+              <div class="badge-row">
+                <span class="type-badge badge-science">百科科普</span>
+                <span class="meta-pill">4 單元</span><span class="meta-pill">50 組詞彙</span><span class="meta-pill">A4 互動教具</span>
+              </div>
+              <h2 class="book-title-en">Sportopedia: Football</h2>
+              <div class="book-title-zh">運動大百科：足球</div>
+              <div class="book-credits">文：Adam Skinner ｜ 圖：Mark Long</div>
+            </div>
+          </div>
+          <p class="book-summary">本單元出自圖文運動百科《Sportopedia》，系統性介紹全球最受歡迎的運動——足球（Football）。內容從西元前 2 世紀的古老起源與 1863 年英國現代規則確立出發，依序解析標準草地球場與球門尺寸、11 人制核心規則、越位與紅黃牌判罰、四大場上位置分工與裝備演進，最後以世界盃、英超聯賽及足壇傳奇紀錄收尾，幫助孩子與大人一次建立完整的足球知識框架。</p>
+          <div class="card-footer">
+            <span class="publisher-note">Wide Eyed Editions</span>
+            <span class="open-cta">開啟導讀手冊 &rarr;</span>
+          </div>
+        </a>
+      </article>
+      </div>
+      <div class="empty-state" id="empty-state">找不到符合條件的書目，請嘗試其他關鍵字或切換分類。</div>
+    </main>
+
+    <footer class="site-footer">
+      Reading Guides Companion Library ｜ 支援手機分頁瀏覽與自選項目 A4 列印
+    </footer>
+  </div>
+
+  <script>
+    var currentFilter = 'all';
+
+    function setFilter(type, btnEl) {
+      currentFilter = type;
+      document.querySelectorAll('.filter-btn').forEach(function(b) {
+        b.classList.remove('active');
+      });
+      btnEl.classList.add('active');
+      applyFilters();
+    }
+
+    function applyFilters() {
+      var q = (document.getElementById('search-input').value || '').trim().toLowerCase();
+      var cards = document.querySelectorAll('.book-card');
+      var visible = 0;
+      cards.forEach(function(card) {
+        var matchType = (currentFilter === 'all') || (card.getAttribute('data-type') === currentFilter);
+        var matchQuery = !q || (card.getAttribute('data-search').indexOf(q) !== -1);
+        if (matchType && matchQuery) {
+          card.style.display = '';
+          visible++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+      document.getElementById('empty-state').style.display = (visible === 0) ? 'block' : 'none';
+    }
+
+    // Automatic English-edition cover loader (Open Library -> Google Books fallback; silent hide on miss)
+    (function loadAllCovers() {
+      document.querySelectorAll('.book-cover').forEach(function(img) {
+        var wrap = img.parentElement;
+        var isbnsRaw = img.getAttribute('data-isbns') || '';
+        var isbns = isbnsRaw ? isbnsRaw.split(',').filter(Boolean) : [];
+        var title = img.getAttribute('data-title') || '';
+        var author = img.getAttribute('data-author') || '';
+
+        function showIfValid(el, onFail) {
+          el.onload = function() {
+            if (el.naturalWidth > 20) wrap.classList.add('has-cover');
+            else if (onFail) onFail();
+          };
+          el.onerror = function() {
+            wrap.classList.remove('has-cover');
+            if (onFail) onFail();
+          };
+        }
+
+        function tryGoogleBooks() {
+          var q = isbns.length ? ('isbn:' + isbns[0]) : ('intitle:' + title + ' inauthor:' + author);
+          fetch('https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(q) + '&maxResults=5')
+            .then(function(res) { return res.ok ? res.json() : null; })
+            .then(function(json) {
+              if (!json || !json.items) return;
+              for (var i = 0; i < json.items.length; i++) {
+                var links = json.items[i].volumeInfo && json.items[i].volumeInfo.imageLinks;
+                var thumb = links && (links.thumbnail || links.smallThumbnail);
+                if (thumb) {
+                  showIfValid(img, null);
+                  img.src = thumb.replace(/^http:\/\//i, 'https://');
+                  return;
+                }
+              }
+            })
+            .catch(function() {});
+        }
+
+        function tryOpenLibraryIsbn(i) {
+          if (i >= isbns.length) {
+            tryOpenLibrarySearch();
+            return;
+          }
+          showIfValid(img, function() { tryOpenLibraryIsbn(i + 1); });
+          img.src = 'https://covers.openlibrary.org/b/isbn/' + isbns[i] + '-M.jpg?default=false';
+        }
+
+        function tryOpenLibrarySearch() {
+          if (!title) { tryGoogleBooks(); return; }
+          fetch('https://openlibrary.org/search.json?title=' + encodeURIComponent(title) + '&author=' + encodeURIComponent(author) + '&limit=5')
+            .then(function(res) { return res.ok ? res.json() : null; })
+            .then(function(json) {
+              if (json && json.docs) {
+                for (var i = 0; i < json.docs.length; i++) {
+                  if (json.docs[i].cover_i) {
+                    showIfValid(img, tryGoogleBooks);
+                    img.src = 'https://covers.openlibrary.org/b/id/' + json.docs[i].cover_i + '-M.jpg?default=false';
+                    return;
+                  }
+                }
+              }
+              tryGoogleBooks();
+            })
+            .catch(function() { tryGoogleBooks(); });
+        }
+
+        if (isbns.length > 0) {
+          tryOpenLibraryIsbn(0);
+        } else {
+          tryOpenLibrarySearch();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
