@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Ugly Five 醜陋五霸｜雙語繪本導讀與科普手冊</title>
+  <title>The Ugly Five 醜醜動物團｜雙語繪本導讀與科普手冊</title>
   <style>
     /* Design Tokens dynamically injected from theme.json */
     :root {
@@ -81,10 +81,34 @@
       line-height: 1.25;
       color: var(--color-lang);
     }
+    .hero-flex {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+    }
+    .hero-cover-wrap {
+      display: none;
+      flex: 0 0 130px;
+    }
+    .hero-cover-wrap.has-cover {
+      display: block;
+    }
+    .hero-cover-wrap img {
+      width: 130px;
+      height: auto;
+      border-radius: 6px;
+      border: 1px solid var(--border-light);
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+      display: block;
+    }
+    .hero-info {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
     .hero-meta {
       font-size: 14px;
       color: var(--color-muted);
-      margin: 0;
+      margin: 0 0 4px;
     }
     .copyright-note {
       margin-top: 12px;
@@ -366,6 +390,9 @@
     body.hide-phonics .sec-phonics { display: none !important; }
 
     @media (max-width: 640px) {
+      .hero-flex { flex-direction: column; gap: 14px; }
+      .hero-cover-wrap { flex: none; }
+      .hero-cover-wrap img { width: 110px; }
       .hero h1 { font-size: 23px; }
       .unit-card, .summary-section { padding: 15px 14px; }
       .tab-btn { flex: 1 1 auto; text-align: center; padding: 7px 8px; font-size: 13px; }
@@ -399,6 +426,9 @@
       .unit-photo {
         break-inside: avoid;
         page-break-inside: avoid;
+      }
+      .hero-cover-wrap img {
+        width: 95px;
       }
       .unit-photo img {
         width: 340px;
@@ -434,11 +464,19 @@
 <body>
   <div class="container">
     <header class="hero">
-      <div class="hero-eyebrow">PICTURE BOOK COMPANION GUIDE｜公開導讀與科普手冊</div>
-      <h1>The Ugly Five 醜陋五霸</h1>
-      <p class="hero-meta">作者：Julia Donaldson ｜ 繪者：Axel Scheffler</p>
-      <div class="copyright-note">
-        著作權聲明：本公開導讀手冊僅收錄原創劇情簡介、英文語彙解析、自然科普與音韻帶讀指南，不含繪本原文與翻譯，請搭配正版實體繪本共讀。
+      <div class="hero-flex">
+        <div class="hero-cover-wrap" id="hero-cover-wrap">
+          <img id="hero-cover-img" alt="The Ugly Five 英文版繪本封面" referrerpolicy="no-referrer">
+        </div>
+        <div class="hero-info">
+          <div class="hero-eyebrow">PICTURE BOOK COMPANION GUIDE｜公開導讀與科普手冊</div>
+          <h1>The Ugly Five 醜醜動物團</h1>
+          <p class="hero-meta">作者：Julia Donaldson ｜ 繪者：Axel Scheffler</p>
+          <p class="hero-meta">英文原版：Alison Green Books (2017) / Scholastic Press (2018) ｜ ISBN：9781338249538</p>
+          <div class="copyright-note">
+            著作權聲明：本公開導讀手冊僅收錄原創劇情簡介、英文語彙解析、自然科普與音韻帶讀指南，不含繪本原文與翻譯，請搭配正版實體繪本共讀。
+          </div>
+        </div>
       </div>
     </header>
 
@@ -1244,6 +1282,68 @@
         }
       });
     }
+
+    // Book cover loader (English edition first): Open Library Covers -> Google Books API fallback (silent hide on miss)
+    (function loadBookCover() {
+      var wrap = document.getElementById('hero-cover-wrap');
+      var img = document.getElementById('hero-cover-img');
+      if (!wrap || !img) return;
+
+      var enIsbns = ['9781338249538', '9781407184630', '9781407174198'];
+      var gbQueries = [
+        'isbn:9781338249538',
+        'isbn:9781407184630',
+        'isbn:9781407174198',
+        'intitle:The Ugly Five inauthor:Julia Donaldson'
+      ];
+
+      function tryGoogleBooks(idx) {
+        if (idx >= gbQueries.length) return; // Silent leave-blank on miss (e.g. reading-pen books)
+        fetch('https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(gbQueries[idx]) + '&maxResults=5')
+          .then(function(res) { return res.ok ? res.json() : null; })
+          .then(function(json) {
+            if (!json || !json.items) { tryGoogleBooks(idx + 1); return; }
+            for (var i = 0; i < json.items.length; i++) {
+              var links = json.items[i].volumeInfo && json.items[i].volumeInfo.imageLinks;
+              var thumb = links && (links.thumbnail || links.smallThumbnail);
+              if (thumb) {
+                var httpsUrl = thumb.replace(/^http:\/\//i, 'https://');
+                img.onload = function() {
+                  if (img.naturalWidth > 20) wrap.classList.add('has-cover');
+                  else tryGoogleBooks(idx + 1);
+                };
+                img.onerror = function() {
+                  wrap.classList.remove('has-cover');
+                  tryGoogleBooks(idx + 1);
+                };
+                img.src = httpsUrl;
+                return;
+              }
+            }
+            tryGoogleBooks(idx + 1);
+          })
+          .catch(function() { /* Offline or rate-limited: stay silently hidden */ });
+      }
+
+      function tryOpenLibrary(idx) {
+        if (idx >= enIsbns.length) {
+          tryGoogleBooks(0);
+          return;
+        }
+        var url = 'https://covers.openlibrary.org/b/isbn/' + enIsbns[idx] + '-M.jpg?default=false';
+        img.onload = function() {
+          if (img.naturalWidth > 20) wrap.classList.add('has-cover');
+          else tryOpenLibrary(idx + 1);
+        };
+        img.onerror = function() {
+          wrap.classList.remove('has-cover');
+          tryOpenLibrary(idx + 1);
+        };
+        img.src = url;
+      }
+
+      tryOpenLibrary(0);
+    })();
   </script>
 </body>
 </html>
