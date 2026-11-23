@@ -350,7 +350,7 @@
             <div class="cover-wrap" id="cover-wrap-1">
               <img class="book-cover"
                    id="cover-img-1"
-                   data-isbns=""
+                   data-isbns="9781786030849,9781786030856,9781836008217"
                    data-title="Sportopedia"
                    data-author="Adam Skinner"
                    alt="Sportopedia: Football 英文原版封面"
@@ -411,14 +411,13 @@
       document.getElementById('empty-state').style.display = (visible === 0) ? 'block' : 'none';
     }
 
-    // Automatic English-edition cover loader (Open Library -> Google Books fallback; silent hide on miss)
+    // Automatic English-edition cover loader: Strict ISBN-only (Open Library -> Google Books fallback; silent hide on miss)
     (function loadAllCovers() {
       document.querySelectorAll('.book-cover').forEach(function(img) {
         var wrap = img.parentElement;
         var isbnsRaw = img.getAttribute('data-isbns') || '';
         var isbns = isbnsRaw ? isbnsRaw.split(',').filter(Boolean) : [];
-        var title = img.getAttribute('data-title') || '';
-        var author = img.getAttribute('data-author') || '';
+        if (isbns.length === 0) return;
 
         function showIfValid(el, onFail) {
           el.onload = function() {
@@ -431,58 +430,34 @@
           };
         }
 
-        function tryGoogleBooks() {
-          var q = isbns.length ? ('isbn:' + isbns[0]) : ('intitle:' + title + ' inauthor:' + author);
-          fetch('https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(q) + '&maxResults=5')
+        function tryGoogleBooks(i) {
+          if (i >= isbns.length) return;
+          fetch('https://www.googleapis.com/books/v1/volumes?q=isbn:' + isbns[i])
             .then(function(res) { return res.ok ? res.json() : null; })
             .then(function(json) {
-              if (!json || !json.items) return;
-              for (var i = 0; i < json.items.length; i++) {
-                var links = json.items[i].volumeInfo && json.items[i].volumeInfo.imageLinks;
-                var thumb = links && (links.thumbnail || links.smallThumbnail);
-                if (thumb) {
-                  showIfValid(img, null);
-                  img.src = thumb.replace(/^http:\/\//i, 'https://');
-                  return;
-                }
+              var item = json && json.items && json.items[0];
+              var links = item && item.volumeInfo && item.volumeInfo.imageLinks;
+              var thumb = links && (links.thumbnail || links.smallThumbnail);
+              if (thumb) {
+                showIfValid(img, function() { tryGoogleBooks(i + 1); });
+                img.src = thumb.replace(/^http:\/\//i, 'https://');
+              } else {
+                tryGoogleBooks(i + 1);
               }
             })
-            .catch(function() {});
+            .catch(function() { tryGoogleBooks(i + 1); });
         }
 
         function tryOpenLibraryIsbn(i) {
           if (i >= isbns.length) {
-            tryOpenLibrarySearch();
+            tryGoogleBooks(0);
             return;
           }
           showIfValid(img, function() { tryOpenLibraryIsbn(i + 1); });
           img.src = 'https://covers.openlibrary.org/b/isbn/' + isbns[i] + '-M.jpg?default=false';
         }
 
-        function tryOpenLibrarySearch() {
-          if (!title) { tryGoogleBooks(); return; }
-          fetch('https://openlibrary.org/search.json?title=' + encodeURIComponent(title) + '&author=' + encodeURIComponent(author) + '&limit=5')
-            .then(function(res) { return res.ok ? res.json() : null; })
-            .then(function(json) {
-              if (json && json.docs) {
-                for (var i = 0; i < json.docs.length; i++) {
-                  if (json.docs[i].cover_i) {
-                    showIfValid(img, tryGoogleBooks);
-                    img.src = 'https://covers.openlibrary.org/b/id/' + json.docs[i].cover_i + '-M.jpg?default=false';
-                    return;
-                  }
-                }
-              }
-              tryGoogleBooks();
-            })
-            .catch(function() { tryGoogleBooks(); });
-        }
-
-        if (isbns.length > 0) {
-          tryOpenLibraryIsbn(0);
-        } else {
-          tryOpenLibrarySearch();
-        }
+        tryOpenLibraryIsbn(0);
       });
     })();
   </script>

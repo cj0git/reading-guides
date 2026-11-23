@@ -779,57 +779,56 @@
       });
     }
 
-    // English-edition cover loader: Open Library Search -> Google Books API fallback (silent hide on miss)
+    // English-edition cover loader: Strict ISBN-only (Open Library -> Google Books fallback; silent hide on miss)
     (function loadBookCover() {
       var wrap = document.getElementById('hero-cover-wrap');
       var img = document.getElementById('hero-cover-img');
       if (!wrap || !img) return;
+      var isbns = ['9781786030849', '9781786030856', '9781836008217'];
 
-      function tryGoogleBooks() {
-        fetch('https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent('intitle:Sportopedia inauthor:Adam Skinner') + '&maxResults=5')
+      function tryGoogleBooks(idx) {
+        if (idx >= isbns.length) return;
+        fetch('https://www.googleapis.com/books/v1/volumes?q=isbn:' + isbns[idx])
           .then(function(res) { return res.ok ? res.json() : null; })
           .then(function(json) {
-            if (!json || !json.items) return;
-            for (var i = 0; i < json.items.length; i++) {
-              var links = json.items[i].volumeInfo && json.items[i].volumeInfo.imageLinks;
-              var thumb = links && (links.thumbnail || links.smallThumbnail);
-              if (thumb) {
-                var httpsUrl = thumb.replace(/^http:\/\//i, 'https://');
-                img.onload = function() {
-                  if (img.naturalWidth > 20) wrap.classList.add('has-cover');
-                };
-                img.onerror = function() { wrap.classList.remove('has-cover'); };
-                img.src = httpsUrl;
-                return;
-              }
+            var item = json && json.items && json.items[0];
+            var links = item && item.volumeInfo && item.volumeInfo.imageLinks;
+            var thumb = links && (links.thumbnail || links.smallThumbnail);
+            if (thumb) {
+              var httpsUrl = thumb.replace(/^http:\/\//i, 'https://');
+              img.onload = function() {
+                if (img.naturalWidth > 20) wrap.classList.add('has-cover');
+                else tryGoogleBooks(idx + 1);
+              };
+              img.onerror = function() {
+                wrap.classList.remove('has-cover');
+                tryGoogleBooks(idx + 1);
+              };
+              img.src = httpsUrl;
+            } else {
+              tryGoogleBooks(idx + 1);
             }
           })
-          .catch(function() {});
+          .catch(function() { tryGoogleBooks(idx + 1); });
       }
 
-      fetch('https://openlibrary.org/search.json?title=' + encodeURIComponent('Sportopedia') + '&author=' + encodeURIComponent('Adam Skinner') + '&limit=5')
-        .then(function(res) { return res.ok ? res.json() : null; })
-        .then(function(json) {
-          if (json && json.docs) {
-            for (var i = 0; i < json.docs.length; i++) {
-              if (json.docs[i].cover_i) {
-                var coverUrl = 'https://covers.openlibrary.org/b/id/' + json.docs[i].cover_i + '-M.jpg?default=false';
-                img.onload = function() {
-                  if (img.naturalWidth > 20) wrap.classList.add('has-cover');
-                  else tryGoogleBooks();
-                };
-                img.onerror = function() {
-                  wrap.classList.remove('has-cover');
-                  tryGoogleBooks();
-                };
-                img.src = coverUrl;
-                return;
-              }
-            }
-          }
-          tryGoogleBooks();
-        })
-        .catch(function() { tryGoogleBooks(); });
+      function tryOpenLibrary(idx) {
+        if (idx >= isbns.length) {
+          tryGoogleBooks(0);
+          return;
+        }
+        img.onload = function() {
+          if (img.naturalWidth > 20) wrap.classList.add('has-cover');
+          else tryOpenLibrary(idx + 1);
+        };
+        img.onerror = function() {
+          wrap.classList.remove('has-cover');
+          tryOpenLibrary(idx + 1);
+        };
+        img.src = 'https://covers.openlibrary.org/b/isbn/' + isbns[idx] + '-M.jpg?default=false';
+      }
+
+      tryOpenLibrary(0);
     })();
   </script>
 </body>
